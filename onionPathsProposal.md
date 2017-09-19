@@ -106,6 +106,29 @@ our friends; the link can be confirmed by observing our choice of medial
 nodes.
 
 # Proposed system
+## Overview
+We keep the exit nodes we use for announcements independent from those we use 
+for friend searches, and moreover keep those we use for each friend 
+independent from those used for other friends. We keep all exit nodes 
+independent from entry nodes, and we also keep entry nodes used for 
+announcements independent from those used for friend searches.
+
+For each of these classes of node, we maintain a _pool_ of nodes which we use 
+for the corresponding purpose. Initially, we fill the pools by using onion 
+requests to find some random nodes in the DHT network at graph distance 2 from 
+bootstrap nodes; explicitly, to fill a pool, we ask a bootstrap node for nodes 
+they know close to a randomly generated key, then ask each of the nodes 
+returned for nodes they know close to a fresh randomly generated key, and add 
+the nodes they give us to the pool. We try to avoid using the same bootstrap 
+node to fill multiple pools.
+
+When paths fail, we try to remove nodes from our pools only when we are fairly 
+sure that the node is really no longer working, and to avoid some attacks we 
+check this by using nodes from independent pools. When we do need to refill a 
+pool due to too many nodes going down, we use onion requests to ask nodes 
+still in the pool for nodes they know close to a random key and add them.
+
+## Details
 We maintain a number of pools of nodes: an _announce entry pool_, a _friend 
 entry pool_, an _announce relay pool_, and one _friend relay pool_ for each 
 offline friend.
