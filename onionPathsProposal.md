@@ -67,8 +67,8 @@ An attacker who can observe the communication between the sender of a request
 and the entry node and between the exit node and the destination can link the 
 two observations by the timings of the packets, and so link the sender's IP 
 address to the target long-term public key of the request. If the attacker 
-actually controls the entry node or the network connection between us and it, 
-they can confirm the link by delaying packets.
+actually controls the entry node or the network connection between the sender
+and the entry node, they can confirm the link by delaying packets.
 
 If we use the same exit node for requests of different types in a way that 
 allows the exit node to determine that the requests come from the same source, 
@@ -105,7 +105,7 @@ our friend search requests, and so link our long-term public key to those of
 our friends; the link can be confirmed by observing our choice of medial 
 nodes.
 
-# Proposed system
+# Proposed system for constructing onion paths
 ## Overview
 We keep the exit nodes we use for announcements independent from those we use 
 for friend searches, and moreover keep those we use for each friend 
@@ -183,11 +183,6 @@ use from 3 to 4, so we can have 2 in each pool.
 When beginning a search to fill an announce/friend close list, we use a node 
 from the corresponding relay pool as the destination.
 
-In the DHT module, we change the eviction policy for all but the closest 
-k-buckets in our close list: if a bucket is such that the closer buckets 
-contain at least 16 nodes between them, then we remove a node from the bucket 
-only if it is timed out.
-
 ## Justifications
 To minimise the chances of a successful attack, we aim to keep the pools 
 _independent_, meaning that whatever an attacker does, the probabilities of 
@@ -221,14 +216,6 @@ key, because with the fake friend approach a single attacker encountered
 during the search can ensure they control the nodes we select, by starting up 
 new nodes with keys generated close to our target key and pointing us to them.
 
-We must change the way nodes are added to the close list in the DHT module, 
-because currently it is easy for an attacker to take over the entire close 
-list of a chosen node by generating appropriate DHT public keys, and so ensure 
-that the bootstrap nodes refer searchers to the attacker. However it is still 
-important that the closest nodes to us are in our close list, so we must 
-continue to replace even good nodes with closer nodes in the closest few 
-non-empty buckets.
-
 An attacker controlling the bootstrap node we ask when first filling a pool 
 can quite easily ensure we fill the pool with their nodes, by directing us 
 along our random walk exclusively to their nodes. This is why we avoid using 
@@ -240,8 +227,56 @@ scheme: bootstrap nodes are our only means of introduction to the network, and
 a bootstrap node can choose to introduce us exclusively to the part of the 
 network it controls.
 
+# DHT eviction
+## Discussion
+There is a separate but related avenue of attack which is not dealt with by 
+the above proposal.
 
-## Backwards compatability
+Currently in the DHT module, when deciding which nodes to among those we have 
+contact with to retain in a given k-bucket, we prefer those with DHT pubkeys 
+closer to our DHT pubkey. As a consequence, it is easy for an attacker to take 
+over the entire close list of a chosen node by generating appropriate DHT 
+public keys. By doing this to bootstrap nodes, an attacker can direct nodes 
+newly joining the network to a subnetwork controlled entirely by the attacker, 
+which combined with traffic analysis as described above allows the attacker to 
+easily deanonymise and determine the friends of the victim. so ensure that the 
+bootstrap nodes refer searchers to the attacker.
+
+To mitigate this attack, we should ensure that the eviction policy for 
+overfull k-buckets is such that an attacker can not easily force a node into 
+the closelist. One obvious way to do this would be by preferring longer-lived 
+nodes - but this risks producing a disconnected network, as new nodes might 
+not become integrated into the network. We opt instead for a secret but 
+constant and determistic criterion for preference, such that for an attacker 
+to get a node into a k-bucket they would have to bruteforcedly try adding 
+nodes with random keys, with the number of attempts required scaling linearly 
+with the size of the network. However, it is important that the closest nodes 
+in our closelist also have us in their closelist, since close nodes to a peer 
+behind NAT act as introducers. With any scheme we can expect the very closest 
+few buckets to not be full and so for this symmetry to hold; this can be 
+expected to work for roughly the closest 2k nodes. The current preference for 
+closer nodes results in such symmetry for all buckets, but a secret preference 
+can not. To be safe and because we might want to reduce the bucket size in the 
+future, we stick with the current distance-based scheme for the buckets 
+containing the closest peers. In the future, it might make sense to split the 
+close list into two parts - one using k-buckets as currently, perhaps with a 
+reduced k, and a separate list for the closest few nodes linearly ordered by 
+distance.
+
+## Proposed DHT eviction policy
+In the DHT module, we change the eviction policy for the Close List as 
+follows. We score DHT keys according to a secret deterministic criterion, such 
+that revealing the score of a key does not compromise any sensitive 
+information. For example, we can encrypt the key to our own DHT key and 
+interpret the result as a score, or take the secure hash of the key xored with 
+a fixed random nonce.
+(TODO: Consider implementation details and decide on a precise scheme.)
+Then when deciding which nodes to retain in an overfull bucket, if the bucket 
+is such that there are at least 16 nodes in closer buckets, we prefer nodes 
+with lower scores; for the closer buckets, we continue to prefer nodes with 
+DHT public keys closer to our own.
+
+# Backwards compatability
 No API or protocol changes are proposed, and nodes using the proposed scheme 
 should play happily with nodes using the current system. The save format must 
 change, however.
