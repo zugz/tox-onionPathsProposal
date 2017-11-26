@@ -265,6 +265,10 @@ close list into two parts - one using k-buckets as currently, perhaps with a
 reduced k, and a separate list for the closest few nodes linearly ordered by 
 distance.
 
+Note that removing symmetry for buckets further out has the secondary effect 
+that nodes behind NAT which can't be contacted by third-party nodes will be 
+less likely to end up in these buckets, making DHT searches more effective.
+
 ## Proposed DHT eviction policy
 In the DHT module, we change the eviction policy for the Close List as 
 follows. We score DHT keys according to a secret deterministic criterion, such 
