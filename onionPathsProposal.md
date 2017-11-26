@@ -232,31 +232,33 @@ network it controls.
 There is a separate but related avenue of attack which is not dealt with by 
 the above proposal.
 
-Currently in the DHT module, when deciding which nodes to among those we have 
-contact with to retain in a given k-bucket, we prefer those with DHT pubkeys 
+Currently in the DHT module, when deciding which nodes among those we 
+encounter to retain in a given k-bucket, we prefer those with DHT pubkeys 
 closer to our DHT pubkey. As a consequence, it is easy for an attacker to take 
 over the entire close list of a chosen node by generating appropriate DHT 
 public keys. By doing this to bootstrap nodes, an attacker can direct nodes 
 newly joining the network to a subnetwork controlled entirely by the attacker, 
 which combined with traffic analysis as described above allows the attacker to 
-easily deanonymise and determine the friends of the victim. so ensure that the 
-bootstrap nodes refer searchers to the attacker.
+easily deanonymise and determine the friends of the victim.
 
 To mitigate this attack, we should ensure that the eviction policy for 
 overfull k-buckets is such that an attacker can not easily force a node into 
 the closelist. One obvious way to do this would be by preferring longer-lived 
 nodes - but this risks producing a disconnected network, as new nodes might 
 not become integrated into the network. We opt instead for a secret but 
-constant and determistic criterion for preference, such that for an attacker 
-to get a node into a k-bucket they would have to bruteforcedly try adding 
-nodes with random keys, with the number of attempts required scaling linearly 
-with the size of the network. However, it is important that the closest nodes 
-in our closelist also have us in their closelist, since close nodes to a peer 
-behind NAT act as introducers. With any scheme we can expect the very closest 
-few buckets to not be full and so for this symmetry to hold; this can be 
-expected to work for roughly the closest 2k nodes. The current preference for 
-closer nodes results in such symmetry for all buckets, but a secret preference 
-can not. To be safe and because we might want to reduce the bucket size in the 
+constant and deterministic criterion for preference, such that for an attacker 
+to get a node into a k-bucket they would have to bruteforce by adding nodes 
+with random keys, with the number of attempts required scaling linearly with 
+the size of the network.
+
+However, it is important that the closest nodes in our closelist also have us 
+in their closelist, since close nodes to a peer behind NAT act as introducers. 
+With any scheme we can expect the very closest few buckets to contain every 
+node in the network within the range of the bucket, and so for this symmetry 
+to hold; this can be expected to work for roughly the closest 2k nodes. The 
+current preference for closer nodes results in such symmetry for all buckets, 
+but a secret preference will not. To be sure that symmetry will hold for 
+sufficient nodes and because we might want to reduce the bucket size in the 
 future, we stick with the current distance-based scheme for the buckets 
 containing the closest peers. In the future, it might make sense to split the 
 close list into two parts - one using k-buckets as currently, perhaps with a 
