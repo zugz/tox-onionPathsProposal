@@ -188,6 +188,11 @@ use from 3 to 4, so we can have 2 in each pool.
 When beginning a search to fill an announce/friend close list, we use a node 
 from the corresponding relay pool as the destination.
 
+FIXME: relying on having a plentiful supply of bootstrap nodes doesn't fit 
+with how they are added by clients currently - they just add a few until we're 
+connected, which probably won't give us enough to have one for each of our 
+friends too... typically toxic will give us 5...
+
 ## Justifications
 To minimise the chances of a successful attack, we aim to keep the pools 
 _independent_, meaning that whatever an attacker does, the probabilities of 
@@ -233,6 +238,10 @@ a bootstrap node can choose to introduce us exclusively to the part of the
 network it controls.
 
 # DHT eviction
+TODO: explain that poisoning the DHT lets us attack the onion, so everything 
+here is modulo the DHT. Then we discuss the below particularly easy way to 
+attack the DHT and how to mitigate it.
+
 ## Discussion
 There is a separate but related avenue of attack which is not dealt with by 
 the above proposal.
