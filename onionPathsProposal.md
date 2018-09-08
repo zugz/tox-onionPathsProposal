@@ -5,8 +5,8 @@ of information about any peer:
 
 * its IP address;
 * its long-term public key;
-* the long-term public keys of its friends, or of the friends of its friends, 
-  etc.
+* the IP addresses or long-term public keys of its friends, or of the friends 
+  of its friends, etc.
 
 We address in this document the problem of constructing onion paths in a way 
 which isn't vulnerable to attacks which allow such links to be made.
@@ -106,11 +106,6 @@ our friends; the link can be confirmed by observing our choice of medial
 nodes.
 
 # Proposed system for constructing onion paths
-NOTE: I no longer propose this system! It relies on having bootstrap nodes 
-which themselves have an unpoisoned view of the DHT network, which in reality 
-is not something we can guarantee. See the next section for further discussion 
-of DHT poisoning.
-
 ## Overview
 We keep the exit nodes we use for announcements independent from those we use 
 for friend searches, and moreover keep those we use for each friend 
